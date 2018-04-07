@@ -19,7 +19,7 @@ twitter_token <- create_token(
   consumer_secret = secret)
  
  
-#Pull comparison data out of twitter (1000 most recient tweets from twitterhandle)
+#Pull comparison data out of twitter (1000 most recent tweets from twitterhandle)
  
 c1 <- get_timelines("twitterhandle1", n = 1000,token = twitter_token)
 c2 <- get_timelines("twitterhandle2", n = 1000,token = twitter_token)
