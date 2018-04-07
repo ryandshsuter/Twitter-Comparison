@@ -1,14 +1,13 @@
-setwd("C:/Users/...")
-
 library(rtweet) #For Twitter API
 library(ggplot2) #For ploting
 library(Rmisc) #For multiplot function
 library(stringr) #For word cloud transformation
 library(tm) #NLP 
+library(wordcloud) #Wordcloud visualization
 
-##Add twitter auth tutorial 
+#Pull data from twitter
 
-#Get Twitter api access
+#Follow steps 1-7 in https://medium.com/@GalarnykMichael/accessing-data-from-twitter-api-using-r-part1-b387a1c7d3e
 
 appname <- "APPNAME"
 key <- "xxxxx"
@@ -20,7 +19,7 @@ twitter_token <- create_token(
   consumer_secret = secret)
  
  
-#Pull comparison data out of twitter (1000 most recient tweets from 
+#Pull comparison data out of twitter (1000 most recient tweets from twitterhandle)
  
 c1 <- get_timelines("twitterhandle1", n = 1000,token = twitter_token)
 c2 <- get_timelines("twitterhandle2", n = 1000,token = twitter_token)
@@ -44,7 +43,7 @@ tweet2$name <- 'l2'
 tweet3$name <- 'l3'
 tweet4$name <- 'l4'
 
-# Save plot 4 histogram plots with average likes
+# Save 4 histogram plots with average likes
 
 p1 <- ggplot(tweet1, aes(x = Likes, fill = name)) +
   geom_histogram(breaks=c(seq(0,50,by=1), max(tweet1$Likes)),position = "identity") +
@@ -75,7 +74,7 @@ multiplot(p1,p2,p3,p4,cols=2)
 
 #Create word map#
 
-#Clean Data
+#Clean data and transform for word cloud
 ##Add loop
 
 tweet=c1$text
@@ -89,7 +88,7 @@ tweet = gsub("  "," ",tweet) #Change dounle spaces to single spaces
 tweet=unlist(tweet)
 c1$textclean <- tweet
 
-c1$tweet <- str_replace_all(c1$textclean, "Join","") #Change data somehow
+c1$tweet <- str_replace_all(c1$textclean, "Join","") 
 
 corpus1=Corpus(VectorSource(c1$tweet)) # Create corpus
 
@@ -97,6 +96,19 @@ corpus1=tm_map(corpus1,tolower) # Convert to lower-case
 
 corpus1=tm_map(corpus1,function(x) removeWords(x,stopwords())) # Remove stopwords  
 
+dtm <- TermDocumentMatrix(corpus1)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
 
+col=brewer.pal(8,"Dark2")
 
+#Create word cloud
+wordcloud(d$word,freq = d$freq, min.freq=10, scale=c(5,.3),rot.per = 0.35,
+          max.word=100, random.order=F,colors=col, use.r.layout=FALSE)
+
+#Create bar plot
+barplot(d[1:20,]$freq, las = 2, names.arg = d[1:20,]$word,
+        col ="lightblue", main ="Most frequent words",
+        ylab = "Word frequencies")
 
