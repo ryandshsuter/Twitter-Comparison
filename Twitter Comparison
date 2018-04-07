@@ -1,0 +1,102 @@
+setwd("C:/Users/...")
+
+library(rtweet) #For Twitter API
+library(ggplot2) #For ploting
+library(Rmisc) #For multiplot function
+library(stringr) #For word cloud transformation
+library(tm) #NLP 
+
+##Add twitter auth tutorial 
+
+#Get Twitter api access
+
+appname <- "APPNAME"
+key <- "xxxxx"
+secret <- "xxxxxxxxxxxxxxxxxxxxxx"
+
+twitter_token <- create_token(
+  app = appname,
+  consumer_key = key,
+  consumer_secret = secret)
+ 
+ 
+#Pull comparison data out of twitter (1000 most recient tweets from 
+ 
+c1 <- get_timelines("twitterhandle1", n = 1000,token = twitter_token)
+c2 <- get_timelines("twitterhandle2", n = 1000,token = twitter_token)
+c3 <- get_timelines("twitterhandle3", n = 1000,token = twitter_token)
+c4 <- get_timelines("twitterhandle4", n = 1000,token = twitter_token)
+
+#Create Histograms#
+
+#Transform data for plots
+
+tweet1 <- data.frame(Likes = c1$favorite_count)
+tweet2 <- data.frame(Likes = c2$favorite_count)
+tweet3 <- data.frame(Likes = c3$favorite_count)
+tweet4 <- data.frame(Likes = c4$favorite_count)
+
+
+# Add names for graph labels
+
+tweet1$name <- 'l1'
+tweet2$name <- 'l2'
+tweet3$name <- 'l3'
+tweet4$name <- 'l4'
+
+# Save plot 4 histogram plots with average likes
+
+p1 <- ggplot(tweet1, aes(x = Likes, fill = name)) +
+  geom_histogram(breaks=c(seq(0,50,by=1), max(tweet1$Likes)),position = "identity") +
+  coord_cartesian(xlim=c(0,50)) +
+  geom_vline(aes(xintercept=mean(tweet1$Likes)), color="blue", linetype="dashed", size=1)+
+  labs(caption = paste("Average Engagement:",round(mean(tweet1$Likes),2)))
+
+p2 <- ggplot(tweet2, aes(x = Likes, fill = name)) +
+  geom_histogram(breaks=c(seq(0,50,by=1), max(tweet1$Likes)),position = "identity") +
+  coord_cartesian(xlim=c(0,50)) +
+  geom_vline(aes(xintercept=mean(tweet2$Likes)), color="blue", linetype="dashed", size=1)+
+  labs(caption = paste("Average Engagement:",round(mean(tweet2$Likes),2)))
+
+p3 <- ggplot(tweet3, aes(x = Likes, fill = name)) +
+  geom_histogram(breaks=c(seq(0,50,by=1), max(tweet1$Likes)),position = "identity") +
+  coord_cartesian(xlim=c(0,50)) +
+  geom_vline(aes(xintercept=mean(tweet3$Likes)), color="blue", linetype="dashed", size=1)+
+  labs(caption = paste("Average Engagement:",round(mean(tweet3$Likes),2)))
+
+p4 <- ggplot(tweet4, aes(x = Likes, fill = name)) +
+  geom_histogram(breaks=c(seq(0,50,by=1), max(tweet1$Likes)),position = "identity") +
+  coord_cartesian(xlim=c(0,50)) +
+  geom_vline(aes(xintercept=mean(tweet4$Likes)), color="blue", linetype="dashed", size=1)+
+  labs(caption = paste("Average Engagement:",round(mean(tweet4$Likes),2)))
+
+multiplot(p1,p2,p3,p4,cols=2)
+
+
+#Create word map#
+
+#Clean Data
+##Add loop
+
+tweet=c1$text
+tweet_list=lapply(tweet, function(x) iconv(x, "latin1", "ASCII", sub=""))
+tweet <- gsub(" ?(f|ht)tp(s?)://(.*)[.][a-z]+", " ", tweet) #remove url
+tweet <- gsub("@.*?\\s", " ", tweet) #remove @
+tweet = gsub('[[:punct:]]', ' ', tweet) #remove punct
+tweet = gsub('[[:cntrl:]]', ' ', tweet) #remove control characters
+tweet = gsub("amp", ' ', tweet) #remove control characters
+tweet = gsub("  "," ",tweet) #Change dounle spaces to single spaces
+tweet=unlist(tweet)
+c1$textclean <- tweet
+
+c1$tweet <- str_replace_all(c1$textclean, "Join","") #Change data somehow
+
+corpus1=Corpus(VectorSource(c1$tweet)) # Create corpus
+
+corpus1=tm_map(corpus1,tolower) # Convert to lower-case
+
+corpus1=tm_map(corpus1,function(x) removeWords(x,stopwords())) # Remove stopwords  
+
+
+
+
